@@ -26,6 +26,7 @@ class DeviceTest extends TestCase
     {
         $response = $this->post(route('devices.store'), [
             'name'                => 'Kitchen Socket',
+            'device_type'         => 'shelly',
             'shelly_id'           => 'shellypmmini3-KITCHEN01',
             'ip_address'          => '192.168.1.55',
             'mqtt_host'           => 'localhost',
@@ -45,7 +46,7 @@ class DeviceTest extends TestCase
     public function test_device_store_validates_required_fields(): void
     {
         $response = $this->post(route('devices.store'), []);
-        $response->assertSessionHasErrors(['name', 'shelly_id', 'mqtt_host', 'mqtt_port', 'mqtt_prefix', 'cutoff_units']);
+        $response->assertSessionHasErrors(['name', 'device_type', 'shelly_id', 'mqtt_host', 'mqtt_port', 'cutoff_units']);
     }
 
     public function test_device_shelly_id_must_be_unique(): void
@@ -78,6 +79,7 @@ class DeviceTest extends TestCase
 
         $this->put(route('devices.update', $device), [
             'name'                => 'Updated Name',
+            'device_type'         => 'shelly',
             'shelly_id'           => $device->shelly_id,
             'mqtt_host'           => 'broker.example.com',
             'mqtt_port'           => 1883,
@@ -156,6 +158,7 @@ class DeviceTest extends TestCase
     {
         return Device::create(array_merge([
             'name'                => 'Test Device',
+            'device_type'         => 'shelly',
             'shelly_id'           => 'shellypmmini3-' . uniqid(),
             'mqtt_host'           => 'localhost',
             'mqtt_port'           => 1883,

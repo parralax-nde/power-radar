@@ -8,8 +8,12 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Device extends Model
 {
+    const TYPE_SHELLY   = 'shelly';
+    const TYPE_TASMOTA  = 'tasmota';
+
     protected $fillable = [
         'name',
+        'device_type',
         'shelly_id',
         'ip_address',
         'mqtt_host',
@@ -55,19 +59,43 @@ class Device extends Model
     /** MQTT topic for status messages from device */
     public function statusTopic(): string
     {
+        if ($this->device_type === self::TYPE_TASMOTA) {
+            return "tele/{$this->shelly_id}/SENSOR";
+        }
         return "{$this->mqtt_prefix}/{$this->shelly_id}/status/switch:0";
     }
 
     /** MQTT topic for RPC commands to device */
     public function rpcTopic(): string
     {
+        if ($this->device_type === self::TYPE_TASMOTA) {
+            return "cmnd/{$this->shelly_id}/Power";
+        }
         return "{$this->mqtt_prefix}/{$this->shelly_id}/rpc";
     }
 
     /** MQTT topic for RPC responses from device */
     public function rpcResponseTopic(): string
     {
+        if ($this->device_type === self::TYPE_TASMOTA) {
+            return "stat/{$this->shelly_id}/RESULT";
+        }
         return "{$this->mqtt_prefix}/{$this->shelly_id}/rpc";
+    }
+
+    /** Whether this device uses the Tasmota MQTT format */
+    public function isTasmota(): bool
+    {
+        return $this->device_type === self::TYPE_TASMOTA;
+    }
+
+    /** Human-readable device type label */
+    public function deviceTypeLabel(): string
+    {
+        return match($this->device_type) {
+            self::TYPE_TASMOTA => 'Tasmota / Athom',
+            default            => 'Shelly Gen3',
+        };
     }
 
     /** Current balance in kWh */

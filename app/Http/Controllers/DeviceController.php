@@ -4,13 +4,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Device;
 use App\Models\PowerUnit;
-use App\Services\ShellyMqttService;
+use App\Services\MqttServiceFactory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class DeviceController extends Controller
 {
-    public function __construct(private ShellyMqttService $mqtt) {}
+    public function __construct(private MqttServiceFactory $mqttFactory) {}
 
     public function index()
     {
@@ -27,18 +27,20 @@ class DeviceController extends Controller
     {
         $data = $request->validate([
             'name'                 => 'required|string|max:100',
+            'device_type'          => 'required|in:shelly,tasmota',
             'shelly_id'            => 'required|string|max:100|unique:devices',
             'ip_address'           => 'nullable|ip',
             'mqtt_host'            => 'required|string|max:255',
             'mqtt_port'            => 'required|integer|min:1|max:65535',
             'mqtt_username'        => 'nullable|string|max:100',
             'mqtt_password'        => 'nullable|string|max:255',
-            'mqtt_prefix'          => 'required|string|max:100',
+            'mqtt_prefix'          => 'nullable|string|max:100',
             'cutoff_units'         => 'required|numeric|min:0',
             'auto_cutoff_enabled'  => 'boolean',
         ]);
 
         $data['auto_cutoff_enabled'] = $request->boolean('auto_cutoff_enabled');
+        $data['mqtt_prefix']         = $data['mqtt_prefix'] ?? 'shellyplus1pm';
 
         $device = Device::create($data);
 
@@ -80,13 +82,14 @@ class DeviceController extends Controller
     {
         $data = $request->validate([
             'name'                 => 'required|string|max:100',
+            'device_type'          => 'required|in:shelly,tasmota',
             'shelly_id'            => "required|string|max:100|unique:devices,shelly_id,{$device->id}",
             'ip_address'           => 'nullable|ip',
             'mqtt_host'            => 'required|string|max:255',
             'mqtt_port'            => 'required|integer|min:1|max:65535',
             'mqtt_username'        => 'nullable|string|max:100',
             'mqtt_password'        => 'nullable|string|max:255',
-            'mqtt_prefix'          => 'required|string|max:100',
+            'mqtt_prefix'          => 'nullable|string|max:100',
             'cutoff_units'         => 'required|numeric|min:0',
             'auto_cutoff_enabled'  => 'boolean',
             'active'               => 'boolean',
@@ -94,6 +97,7 @@ class DeviceController extends Controller
 
         $data['auto_cutoff_enabled'] = $request->boolean('auto_cutoff_enabled');
         $data['active']              = $request->boolean('active');
+        $data['mqtt_prefix']         = $data['mqtt_prefix'] ?? 'shellyplus1pm';
 
         $device->update($data);
 
@@ -121,7 +125,7 @@ class DeviceController extends Controller
         }
 
         try {
-            $this->mqtt->sendRelayCommand($device, $on);
+            $this->mqttFactory->make($device)->sendRelayCommand($device, $on);
             return back()->with('success', 'Relay ' . ($on ? 'turned ON' : 'turned OFF') . ' successfully.');
         } catch (\Throwable $e) {
             Log::error('Toggle relay failed: ' . $e->getMessage());
@@ -135,7 +139,7 @@ class DeviceController extends Controller
     public function pollStatus(Device $device)
     {
         try {
-            $result = $this->mqtt->pollStatus($device);
+            $result = $this->mqttFactory->make($device)->pollStatus($device);
             if (!$result) {
                 return back()->with('error', 'No response from device.');
             }

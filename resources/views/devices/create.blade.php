@@ -10,7 +10,7 @@
             <i class="bi bi-arrow-left me-1"></i>Back to Devices
         </a>
         <h1 class="h3 fw-800 mt-2 mb-1 gradient-text">Add New Device</h1>
-        <p style="color:var(--pr-text-muted);font-size:0.875rem">Connect a Shelly 1PM Mini Gen3 via MQTT</p>
+        <p style="color:var(--pr-text-muted);font-size:0.875rem">Connect a power monitoring device via MQTT (Shelly Gen3 or Tasmota / Athom)</p>
     </div>
 
     <div class="row justify-content-center">
@@ -29,6 +29,43 @@
                 <form action="{{ route('devices.store') }}" method="POST">
                     @csrf
 
+                    {{-- Device type --}}
+                    <h5 class="fw-700 mb-3" style="color:var(--pr-accent)">
+                        <i class="bi bi-diagram-3 me-1"></i>Device Type
+                    </h5>
+                    <div class="row g-3 mb-2">
+                        <div class="col-6">
+                            <label class="device-type-card selected" id="card-shelly">
+                                <input type="radio" name="device_type" value="shelly"
+                                       {{ old('device_type', 'shelly') === 'shelly' ? 'checked' : '' }}
+                                       class="d-none" onchange="switchDeviceType('shelly')">
+                                <div class="text-center py-1">
+                                    <i class="bi bi-broadcast" style="color:var(--pr-accent);font-size:1.3rem"></i>
+                                    <div class="fw-700 mt-1" style="color:var(--pr-accent);font-size:0.9rem">Shelly Gen3</div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <label class="device-type-card" id="card-tasmota">
+                                <input type="radio" name="device_type" value="tasmota"
+                                       {{ old('device_type') === 'tasmota' ? 'checked' : '' }}
+                                       class="d-none" onchange="switchDeviceType('tasmota')">
+                                <div class="text-center py-1">
+                                    <i class="bi bi-cpu-fill" style="color:var(--pr-success);font-size:1.3rem"></i>
+                                    <div class="fw-700 mt-1" style="color:var(--pr-success);font-size:0.9rem">Tasmota / Athom</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="topic-info-shelly" class="mb-4 px-2" style="font-size:0.78rem;color:var(--pr-text-muted)">
+                        Topics: <code style="color:var(--pr-text)">{prefix}/{device-id}/status/switch:0</code>
+                    </div>
+                    <div id="topic-info-tasmota" class="d-none mb-4 px-2" style="font-size:0.78rem;color:var(--pr-text-muted)">
+                        Topics: <code style="color:var(--pr-text)">tele/{device-id}/SENSOR</code> &amp; <code style="color:var(--pr-text)">cmnd/{device-id}/Power</code>
+                    </div>
+
+                    <hr class="pr-divider mb-4">
+
                     <h5 class="fw-700 mb-3" style="color:var(--pr-accent)">
                         <i class="bi bi-info-circle me-1"></i>Device Info
                     </h5>
@@ -40,11 +77,11 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="pr-label">Shelly Device ID *</label>
+                        <label class="pr-label" id="device-id-label">Shelly Device ID *</label>
                         <input type="text" name="shelly_id" value="{{ old('shelly_id') }}"
-                               class="form-control pr-form-control"
+                               class="form-control pr-form-control" id="device-id-input"
                                placeholder="e.g. shellypmmini3-AABBCCDDEEFF" required>
-                        <div style="font-size:0.75rem;color:var(--pr-text-muted);margin-top:0.3rem">
+                        <div id="device-id-hint" style="font-size:0.75rem;color:var(--pr-text-muted);margin-top:0.3rem">
                             Found on the Shelly app or device label.
                         </div>
                     </div>
@@ -87,10 +124,10 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="pr-label">MQTT Topic Prefix *</label>
+                    <div class="mb-4" id="prefix-row">
+                        <label class="pr-label">MQTT Topic Prefix (Shelly)</label>
                         <input type="text" name="mqtt_prefix" value="{{ old('mqtt_prefix', 'shellyplus1pm') }}"
-                               class="form-control pr-form-control" required>
+                               class="form-control pr-form-control">
                         <div style="font-size:0.75rem;color:var(--pr-text-muted);margin-top:0.3rem">
                             For Gen3 Mini: <code style="color:var(--pr-accent)">shellyplus1pm</code> or
                             <code style="color:var(--pr-accent)">shellypmmini3</code>
@@ -138,3 +175,58 @@
 
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function switchDeviceType(type) {
+    const shellyCard    = document.getElementById('card-shelly');
+    const tasmotaCard   = document.getElementById('card-tasmota');
+    const shellyInfo    = document.getElementById('topic-info-shelly');
+    const tasmotaInfo   = document.getElementById('topic-info-tasmota');
+    const prefixRow     = document.getElementById('prefix-row');
+    const deviceIdLabel = document.getElementById('device-id-label');
+    const deviceIdHint  = document.getElementById('device-id-hint');
+    const deviceIdInput = document.getElementById('device-id-input');
+
+    if (type === 'tasmota') {
+        tasmotaCard.classList.add('selected');
+        shellyCard.classList.remove('selected');
+        shellyInfo.classList.add('d-none');
+        tasmotaInfo.classList.remove('d-none');
+        prefixRow.classList.add('d-none');
+        deviceIdLabel.textContent = 'Tasmota Topic Name *';
+        deviceIdHint.textContent  = 'The MQTT "Topic" from Tasmota → Configuration → MQTT';
+        deviceIdInput.placeholder = 'e.g. tasmota-switch or power-meter-1';
+    } else {
+        shellyCard.classList.add('selected');
+        tasmotaCard.classList.remove('selected');
+        tasmotaInfo.classList.add('d-none');
+        shellyInfo.classList.remove('d-none');
+        prefixRow.classList.remove('d-none');
+        deviceIdLabel.textContent = 'Shelly Device ID *';
+        deviceIdHint.textContent  = 'Found on the Shelly app or device label.';
+        deviceIdInput.placeholder = 'e.g. shellypmmini3-AABBCCDDEEFF';
+    }
+}
+document.addEventListener('DOMContentLoaded', () => {
+    const selected = document.querySelector('input[name="device_type"]:checked')?.value || 'shelly';
+    switchDeviceType(selected);
+});
+</script>
+<style>
+.device-type-card {
+    display: block;
+    cursor: pointer;
+    border: 2px solid var(--pr-border);
+    border-radius: 10px;
+    padding: 0.75rem;
+    transition: all 0.2s;
+    background: var(--pr-surface-2);
+}
+.device-type-card:hover { border-color: rgba(108,99,255,0.4); }
+.device-type-card.selected {
+    border-color: var(--pr-primary);
+    background: rgba(108,99,255,0.1);
+}
+</style>
+@endpush

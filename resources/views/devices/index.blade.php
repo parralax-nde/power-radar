@@ -35,7 +35,7 @@
                     <thead>
                         <tr>
                             <th>Name</th>
-                            <th>Shelly ID</th>
+                            <th>Device ID / Type</th>
                             <th>Status</th>
                             <th>Balance</th>
                             <th>Power</th>
@@ -47,7 +47,14 @@
                         @foreach ($devices as $device)
                             <tr>
                                 <td class="fw-600">{{ $device->name }}</td>
-                                <td style="color:var(--pr-text-muted);font-size:0.8rem">{{ $device->shelly_id }}</td>
+                                <td>
+                                    <div style="font-size:0.75rem;color:var(--pr-text-muted)">{{ $device->shelly_id }}</div>
+                                    @if ($device->device_type === 'tasmota')
+                                        <span style="font-size:0.7rem;color:var(--pr-success)"><i class="bi bi-cpu-fill"></i> Tasmota</span>
+                                    @else
+                                        <span style="font-size:0.7rem;color:var(--pr-accent)"><i class="bi bi-broadcast"></i> Shelly</span>
+                                    @endif
+                                </td>
                                 <td>
                                     @if ($device->is_cutoff)
                                         <span class="status-pill status-off"><span class="dot"></span>Cut Off</span>

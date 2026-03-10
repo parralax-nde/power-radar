@@ -330,6 +330,13 @@
                     <i class="bi bi-plus-circle me-1"></i>Add Device
                 </a>
             </li>
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.*') ? 'active' : '' }}"
+                   href="{{ route('admin.dashboard') }}"
+                   style="{{ request()->routeIs('admin.*') ? '' : 'color: var(--pr-warning) !important;' }}">
+                    <i class="bi bi-shield-check me-1"></i>Admin
+                </a>
+            </li>
         </ul>
     </div>
 </nav>
