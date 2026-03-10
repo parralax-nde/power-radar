@@ -74,7 +74,7 @@
                             Command: <code style="color:var(--pr-text)">{prefix}/{device-id}/rpc</code>
                         </div>
                     </div>
-                    <div id="topic-info-tasmota" class="topic-info mt-3 p-3 d-none" style="background:rgba(0,200,150,0.05);border:1px solid rgba(0,200,150,0.15);border-radius:8px">
+                    <div id="topic-info-tasmota" class="topic-info mt-3 p-3" style="display:none;background:rgba(0,200,150,0.05);border:1px solid rgba(0,200,150,0.15);border-radius:8px">
                         <div class="fw-600 mb-2" style="color:var(--pr-success);font-size:0.85rem">
                             <i class="bi bi-info-circle me-1"></i>Tasmota / Athom MQTT Topics
                         </div>
@@ -219,7 +219,7 @@
                             <li class="mb-1">Run <code style="color:var(--pr-text)">php artisan mqtt:subscribe</code> to listen</li>
                         </ol>
                     </div>
-                    <div id="guide-tasmota" class="d-none" style="font-size:0.82rem;color:var(--pr-text-muted)">
+                    <div id="guide-tasmota" style="display:none;font-size:0.82rem;color:var(--pr-text-muted)">
                         <ol class="ps-3 mb-0">
                             <li class="mb-1">Flash Tasmota or use Athom pre-flashed device</li>
                             <li class="mb-1">Set <code style="color:var(--pr-text)">MqttHost</code> to this server's IP in Tasmota console</li>
@@ -262,22 +262,22 @@ function switchDeviceType(type) {
     if (type === 'tasmota') {
         tasmotaCard.classList.add('selected');
         shellyCard.classList.remove('selected');
-        shellyInfo.classList.add('d-none');
-        tasmotaInfo.classList.remove('d-none');
-        guideShelly.classList.add('d-none');
-        guideTasmota.classList.remove('d-none');
-        prefixRow.classList.add('d-none');
+        shellyInfo.style.display = 'none';
+        tasmotaInfo.style.display = '';
+        guideShelly.style.display = 'none';
+        guideTasmota.style.display = '';
+        prefixRow.style.display = 'none';
         deviceIdLabel.textContent = 'Tasmota Topic Name';
         deviceIdHint.textContent  = 'The MQTT "Topic" configured in Tasmota → Configuration → MQTT';
         deviceIdInput.placeholder = 'e.g. tasmota-switch or power-meter-1';
     } else {
         shellyCard.classList.add('selected');
         tasmotaCard.classList.remove('selected');
-        tasmotaInfo.classList.add('d-none');
-        shellyInfo.classList.remove('d-none');
-        guideTasmota.classList.add('d-none');
-        guideShelly.classList.remove('d-none');
-        prefixRow.classList.remove('d-none');
+        tasmotaInfo.style.display = 'none';
+        shellyInfo.style.display = '';
+        guideTasmota.style.display = 'none';
+        guideShelly.style.display = '';
+        prefixRow.style.display = '';
         deviceIdLabel.textContent = 'Shelly Device ID';
         deviceIdHint.textContent  = 'Found on the device label or Shelly app';
         deviceIdInput.placeholder = 'shellypmmini3-AABBCCDDEEFF';

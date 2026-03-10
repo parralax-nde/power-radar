@@ -60,7 +60,7 @@
                     <div id="topic-info-shelly" class="mb-4 px-2" style="font-size:0.78rem;color:var(--pr-text-muted)">
                         Topics: <code style="color:var(--pr-text)">{prefix}/{device-id}/status/switch:0</code>
                     </div>
-                    <div id="topic-info-tasmota" class="d-none mb-4 px-2" style="font-size:0.78rem;color:var(--pr-text-muted)">
+                    <div id="topic-info-tasmota" style="display:none" class="mb-4 px-2" style="font-size:0.78rem;color:var(--pr-text-muted)">
                         Topics: <code style="color:var(--pr-text)">tele/{device-id}/SENSOR</code> &amp; <code style="color:var(--pr-text)">cmnd/{device-id}/Power</code>
                     </div>
 
@@ -191,18 +191,18 @@ function switchDeviceType(type) {
     if (type === 'tasmota') {
         tasmotaCard.classList.add('selected');
         shellyCard.classList.remove('selected');
-        shellyInfo.classList.add('d-none');
-        tasmotaInfo.classList.remove('d-none');
-        prefixRow.classList.add('d-none');
+        shellyInfo.style.display = 'none';
+        tasmotaInfo.style.display = '';
+        prefixRow.style.display = 'none';
         deviceIdLabel.textContent = 'Tasmota Topic Name *';
         deviceIdHint.textContent  = 'The MQTT "Topic" from Tasmota → Configuration → MQTT';
         deviceIdInput.placeholder = 'e.g. tasmota-switch or power-meter-1';
     } else {
         shellyCard.classList.add('selected');
         tasmotaCard.classList.remove('selected');
-        tasmotaInfo.classList.add('d-none');
-        shellyInfo.classList.remove('d-none');
-        prefixRow.classList.remove('d-none');
+        tasmotaInfo.style.display = 'none';
+        shellyInfo.style.display = '';
+        prefixRow.style.display = '';
         deviceIdLabel.textContent = 'Shelly Device ID *';
         deviceIdHint.textContent  = 'Found on the Shelly app or device label.';
         deviceIdInput.placeholder = 'e.g. shellypmmini3-AABBCCDDEEFF';
