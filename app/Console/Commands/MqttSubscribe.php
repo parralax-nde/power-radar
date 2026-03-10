@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Device;
-use App\Services\ShellyMqttService;
+use App\Services\MqttServiceFactory;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use PhpMqtt\Client\ConnectionSettings;
@@ -12,9 +12,9 @@ use PhpMqtt\Client\MqttClient;
 class MqttSubscribe extends Command
 {
     protected $signature   = 'mqtt:subscribe';
-    protected $description = 'Subscribe to all active Shelly device MQTT topics and process messages in real-time';
+    protected $description = 'Subscribe to all active device MQTT topics and process messages in real-time';
 
-    public function handle(ShellyMqttService $shellyService): int
+    public function handle(MqttServiceFactory $mqttFactory): int
     {
         $devices = Device::where('active', true)->get();
 
@@ -44,20 +44,18 @@ class MqttSubscribe extends Command
         $client = new MqttClient($primary->mqtt_host, $primary->mqtt_port, 'power-radar-subscriber-' . uniqid());
         $client->connect($settings);
 
-        // Build a lookup map: topic -> Device
-        $topicMap = [];
         foreach ($devices as $device) {
-            $topic              = $device->statusTopic();
-            $topicMap[$topic]   = $device;
+            $topic   = $device->statusTopic();
+            $service = $mqttFactory->make($device);
 
-            $client->subscribe($topic, function (string $topic, string $message) use ($device, $shellyService) {
-                $this->line("[{$device->name}] Received status update");
+            $client->subscribe($topic, function (string $topic, string $message) use ($device, $service) {
+                $this->line("[{$device->name}] [{$device->deviceTypeLabel()}] Received status update");
                 try {
                     $payload = json_decode($message, true);
                     if (!is_array($payload)) {
                         return;
                     }
-                    $result = $shellyService->storeReading($device, $payload);
+                    $result = $service->storeReading($device, $payload);
                     $this->info("  Power: {$result['power_w']} W | Relay: " . ($result['relay_on'] ? 'ON' : 'OFF'));
                 } catch (\Throwable $e) {
                     Log::error("MQTT subscribe handler error: " . $e->getMessage());
@@ -65,12 +63,11 @@ class MqttSubscribe extends Command
                 }
             }, 0);
 
-            $this->line("  Subscribed to: {$topic}");
+            $this->line("  Subscribed to: {$topic} ({$device->deviceTypeLabel()})");
         }
 
         $this->info('Listening for messages… (Ctrl+C to stop)');
 
-        // Loop indefinitely
         $client->loop(true);
 
         return self::SUCCESS;

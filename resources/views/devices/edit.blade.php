@@ -28,6 +28,36 @@
                     @csrf @method('PUT')
 
                     <h5 class="fw-700 mb-3" style="color:var(--pr-accent)">
+                        <i class="bi bi-diagram-3 me-1"></i>Device Type
+                    </h5>
+                    <div class="row g-3 mb-4">
+                        <div class="col-6">
+                            <label class="device-type-card {{ $device->device_type === 'shelly' ? 'selected' : '' }}" id="card-shelly">
+                                <input type="radio" name="device_type" value="shelly"
+                                       {{ old('device_type', $device->device_type) === 'shelly' ? 'checked' : '' }}
+                                       class="d-none" onchange="switchDeviceType('shelly')">
+                                <div class="text-center py-1">
+                                    <i class="bi bi-broadcast" style="color:var(--pr-accent);font-size:1.2rem"></i>
+                                    <div class="fw-700 mt-1" style="color:var(--pr-accent);font-size:0.85rem">Shelly Gen3</div>
+                                </div>
+                            </label>
+                        </div>
+                        <div class="col-6">
+                            <label class="device-type-card {{ $device->device_type === 'tasmota' ? 'selected' : '' }}" id="card-tasmota">
+                                <input type="radio" name="device_type" value="tasmota"
+                                       {{ old('device_type', $device->device_type) === 'tasmota' ? 'checked' : '' }}
+                                       class="d-none" onchange="switchDeviceType('tasmota')">
+                                <div class="text-center py-1">
+                                    <i class="bi bi-cpu-fill" style="color:var(--pr-success);font-size:1.2rem"></i>
+                                    <div class="fw-700 mt-1" style="color:var(--pr-success);font-size:0.85rem">Tasmota / Athom</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr class="pr-divider mb-4">
+
+                    <h5 class="fw-700 mb-3" style="color:var(--pr-accent)">
                         <i class="bi bi-info-circle me-1"></i>Device Info
                     </h5>
 
@@ -38,7 +68,9 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="pr-label">Shelly Device ID *</label>
+                        <label class="pr-label" id="device-id-label">
+                            {{ $device->isTasmota() ? 'Tasmota Topic Name' : 'Shelly Device ID' }} *
+                        </label>
                         <input type="text" name="shelly_id" value="{{ old('shelly_id', $device->shelly_id) }}"
                                class="form-control pr-form-control" required>
                     </div>
@@ -81,10 +113,10 @@
                         </div>
                     </div>
 
-                    <div class="mb-4">
-                        <label class="pr-label">MQTT Topic Prefix *</label>
+                    <div class="mb-4" id="prefix-row" {{ $device->isTasmota() ? 'style=display:none' : '' }}>
+                        <label class="pr-label">MQTT Topic Prefix (Shelly)</label>
                         <input type="text" name="mqtt_prefix" value="{{ old('mqtt_prefix', $device->mqtt_prefix) }}"
-                               class="form-control pr-form-control" required>
+                               class="form-control pr-form-control">
                     </div>
 
                     <hr class="pr-divider mb-4">
@@ -133,3 +165,42 @@
 
 </div>
 @endsection
+
+
+@push('scripts')
+<script>
+function switchDeviceType(type) {
+    const shellyCard    = document.getElementById('card-shelly');
+    const tasmotaCard   = document.getElementById('card-tasmota');
+    const prefixRow     = document.getElementById('prefix-row');
+    const deviceIdLabel = document.getElementById('device-id-label');
+    if (type === 'tasmota') {
+        tasmotaCard.classList.add('selected');
+        shellyCard.classList.remove('selected');
+        prefixRow.style.display = 'none';
+        deviceIdLabel.textContent = 'Tasmota Topic Name *';
+    } else {
+        shellyCard.classList.add('selected');
+        tasmotaCard.classList.remove('selected');
+        prefixRow.style.display = '';
+        deviceIdLabel.textContent = 'Shelly Device ID *';
+    }
+}
+</script>
+<style>
+.device-type-card {
+    display: block;
+    cursor: pointer;
+    border: 2px solid var(--pr-border);
+    border-radius: 10px;
+    padding: 0.75rem;
+    transition: all 0.2s;
+    background: var(--pr-surface-2);
+}
+.device-type-card:hover { border-color: rgba(108,99,255,0.4); }
+.device-type-card.selected {
+    border-color: var(--pr-primary);
+    background: rgba(108,99,255,0.1);
+}
+</style>
+@endpush

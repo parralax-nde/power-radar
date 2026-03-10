@@ -3,12 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Device;
-use App\Services\ShellyMqttService;
+use App\Services\MqttServiceFactory;
 use Illuminate\Http\Request;
 
 class UnitController extends Controller
 {
-    public function __construct(private ShellyMqttService $mqtt) {}
+    public function __construct(private MqttServiceFactory $mqttFactory) {}
 
     /**
      * Show the top-up form.
@@ -29,7 +29,7 @@ class UnitController extends Controller
             'note'       => 'nullable|string|max:255',
         ]);
 
-        $unit = $this->mqtt->topUp($device, (float) $data['kwh_amount'], $data['note'] ?? '');
+        $unit = $this->mqttFactory->make($device)->topUp($device, (float) $data['kwh_amount'], $data['note'] ?? '');
 
         return redirect()->route('devices.show', $device)
             ->with('success', sprintf(

@@ -135,6 +135,7 @@ class ShellyMqttServiceTest extends TestCase
     {
         return Device::create(array_merge([
             'name'                => 'Unit Test Device',
+            'device_type'         => 'shelly',
             'shelly_id'           => 'shellypmmini3-UNIT' . uniqid(),
             'mqtt_host'           => 'localhost',
             'mqtt_port'           => 1883,
